@@ -1,0 +1,29 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.32002.261
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Downloader", "Downloader\Downloader.csproj", "{1F92CC3D-BCCF-4001-917E-FD9B8C4233DC}"
+EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "DownloaderSetup", "DownloaderSetup\DownloaderSetup.vdproj", "{75DC4C53-210E-49E0-BFF2-F5175B431FAE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1F92CC3D-BCCF-4001-917E-FD9B8C4233DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F92CC3D-BCCF-4001-917E-FD9B8C4233DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1F92CC3D-BCCF-4001-917E-FD9B8C4233DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1F92CC3D-BCCF-4001-917E-FD9B8C4233DC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{75DC4C53-210E-49E0-BFF2-F5175B431FAE}.Debug|Any CPU.ActiveCfg = Debug
+		{75DC4C53-210E-49E0-BFF2-F5175B431FAE}.Release|Any CPU.ActiveCfg = Release
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2CED11B4-839C-4B61-B5E1-BFB36242A4DD}
+	EndGlobalSection
+EndGlobal
