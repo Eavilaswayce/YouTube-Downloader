@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using YoutubeExplode;
 using YoutubeExplode.Common;
@@ -16,9 +18,8 @@ namespace Downloader
     /// </summary>
     public partial class MainWindow : Window
     {
-        public string link;
-        public string downloadPath;
-        public string downloadFormat;
+        CancellationTokenSource cancellationTokenSource = new();
+        CancellationToken cancellationToken;
 
         public MainWindow()
         {
@@ -27,17 +28,14 @@ namespace Downloader
 
         private void SelectDirectory(object sender, RoutedEventArgs e)
         {
-            System.Windows.Forms.FolderBrowserDialog fbd = new System.Windows.Forms.FolderBrowserDialog();
+            System.Windows.Forms.FolderBrowserDialog fbd = new();
 
             if (fbd.ShowDialog() != System.Windows.Forms.DialogResult.OK)
-            {
                 return;
-            }
 
-            downloadPath = fbd.SelectedPath;
-            directoryBox.Text = downloadPath;
+            directoryBox.Text = fbd.SelectedPath;
 
-            Properties.Settings.Default.savedDirectory = downloadPath;
+            Properties.Settings.Default.savedDirectory = fbd.SelectedPath;
             Properties.Settings.Default.Save();
         }
 
@@ -45,8 +43,8 @@ namespace Downloader
         {
             if (e.Key == Key.Enter)
             { 
-                if (startDownload.IsEnabled) { await BeginDownload(); }
-                else { return; }
+                if (startDownload.IsEnabled)
+                    await BeginDownload();
             }
         }
 
@@ -57,94 +55,106 @@ namespace Downloader
 
         public async Task BeginDownload()
         {
-            link = videoLink.Text;
-
-            if (string.IsNullOrEmpty(downloadPath) || !(bool)saveMP3.IsChecked && !(bool)saveMP4.IsChecked)
-            {
-                MessageBox.Show("Please select a directory and a file type to download.", "Downloader", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-
             if (string.IsNullOrEmpty(videoLink.Text))
             {
                 MessageBox.Show("Please input a YouTube link.", "Downloader", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
-            downloadInfo.Height = new GridLength(76);
-            this.Height = 280;
-
-            directorySelect.IsEnabled = false;
-            startDownload.IsEnabled = false;
-            saveMP3.IsEnabled = false;
-            saveMP4.IsEnabled = false;
-            status.Text = "Downloading... 0%";
-
-            if ((bool)saveMP3.IsChecked) { downloadFormat = "mp3"; }
-            if ((bool)saveMP4.IsChecked) { downloadFormat = "mp4"; }
-
-            if (link.Contains("list"))
+            if (string.IsNullOrEmpty(Properties.Settings.Default.savedDirectory) || saveMP3.IsChecked == false && saveMP4.IsChecked == false)
             {
-                try
-                {
-                    await DownloadPlaylist();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"An error occurred: \"{ex.Message}\".", "Downloader", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
+                MessageBox.Show("Please select a directory and a file type to download.", "Downloader", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
             }
+
+            string link = videoLink.Text;
+            string ?downloadFormat = null;
+            string savedDirectory = Properties.Settings.Default.savedDirectory;
+
+            if (saveMP3.IsChecked == true)
+                downloadFormat = "mp3";
             else
+                downloadFormat = "mp4";
+
+            ChangeButtonStates(false);
+
+            try
             {
-                try
+                // If the given URL contains "&list" this means it is part of a playlist
+                if (!link.Contains("&list"))
                 {
-                    await DownloadSingle();
+                    await DownloadSingle(link, downloadFormat, savedDirectory);
                 }
-                catch (Exception ex)
+                else
                 {
-                    MessageBox.Show($"An error occurred: \"{ex.Message}\".", "Downloader", MessageBoxButton.OK, MessageBoxImage.Error);
+                    await DownloadPlaylist(link, downloadFormat, savedDirectory);
                 }
             }
+            catch (Exception ex)
+            {
+                new Thread(() =>
+                {
+                    MessageBox.Show($"An error occurred: \"{ex.Message}\".", "Downloader", MessageBoxButton.OK, MessageBoxImage.Error);
 
-            downloadInfo.Height = new GridLength(0);
-            this.Height = 190;
+                }).Start();
+            }
 
-            directorySelect.IsEnabled = true;
-            startDownload.IsEnabled = true;
-            saveMP3.IsEnabled = true;
-            saveMP4.IsEnabled = true;
-            status.Text = "";
-            videoLink.Text = "";
-            videoLink.Focus();
-            directoryBox.Focus();
-            downloadProgress.Value = 0;
+            ChangeButtonStates(true);
         }
 
-        public async Task DownloadSingle()
+        public async Task DownloadSingle(string link, string format, string path)
         {
+            // Needed for security
             var handler = new HttpClientHandler();
             var httpClient = new HttpClient(handler, true);
             handler.UseCookies = false;
 
+            // Get video data
             var youtube = new YoutubeClient(httpClient);
-            var streamMetaData = await youtube.Videos.GetAsync(link);
-            var title = streamMetaData.Title.Replace("\"", "'").Replace("\\", "").Replace("/", "").Replace(":", "").Replace("*", "").Replace("?", "").Replace("<", "").Replace(">", "").Replace("|", "");
+            var streamData = await youtube.Videos.GetAsync(link);
+            var title = ReplaceInvalidCharacters(streamData.Title);
 
             var progress = new Progress<double>(percent =>
             {
-                downloadProgress.Value = Convert.ToInt32(percent * 100.00f);
-                status.Text = "Downloading... " + Convert.ToInt32(percent * 100.00f) + "%";
+                // To split the progress bar into two halves, fill one half and then the next,
+                // maximum of both progress bars is 50
+                if (downloadProgressOne.Value != 50)
+                {
+                    downloadProgressOne.Value = percent * 100.00f;
+                }
+                else
+                {
+                    downloadProgressTwo.Value = (percent * 100.00f) - 50;
+                }
+
+                // Taskbar icon progress bar
+                taskbarIcon.ProgressValue = percent;
+
+                status.Text = $"Downloading... {Convert.ToInt32(percent * 100.00f)}%";
             });
 
             try
             {
-                await youtube.Videos.DownloadAsync(link, $"{downloadPath}\\{title}.{downloadFormat}", o => o.SetFormat(downloadFormat).SetPreset(ConversionPreset.UltraFast), progress);
+                // Download content
+                await youtube.Videos.DownloadAsync(link, $"{path}\\{title}.{format}", o => o.SetFormat(format).SetPreset(ConversionPreset.UltraFast), progress, cancellationToken);
             }
-            catch (Exception ex)
+            catch (TaskCanceledException)
             {
-                new Thread(() => 
+                new Thread(() =>
                 {
-                    MessageBox.Show($"Failed to download video: \"{title}\" due to an error.\n\nReason: \"{ex.Message}\".", "Downloader", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show($"Successfully cancelled the download of: \"{title}\".", "Downloader", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                }).Start();
+
+                File.Delete($"{path}\\{title}.{format}");
+
+                return;
+            }
+            catch (Exception es)
+            {
+                new Thread(() =>
+                {
+                    MessageBox.Show($"Failed to download video: \"{title}\" due to an error.\n\nReason: \"{es.Message}\".", "Downloader", MessageBoxButton.OK, MessageBoxImage.Warning);
 
                 }).Start();
 
@@ -158,66 +168,93 @@ namespace Downloader
             }).Start();
         }
 
-        public async Task DownloadPlaylist()
+        public async Task DownloadPlaylist(string link, string format, string path)
         {
+            // Create a string list incase any videos fail to download
+            List<string> failedVideosTitles = new();
             string finalList = "";
-            List<string> failedVideosTitles = new List<string>();
+            int failedVideosAmount = 0;
 
+            // Needed for security
             var handler = new HttpClientHandler();
             var httpClient = new HttpClient(handler, true);
             handler.UseCookies = false;
 
+            // Get playlist data
             var youtube = new YoutubeClient(httpClient);
             var playlistData = await youtube.Playlists.GetAsync(link);
-            var playlistName = playlistData.Title.Replace("\"", "'").Replace("\\", "").Replace("/", "").Replace(":", "").Replace("*", "").Replace("?", "").Replace("<", "").Replace(">", "").Replace("|", "");
+            var playlistName = ReplaceInvalidCharacters(playlistData.Title);
             var total = await youtube.Playlists.GetVideosAsync(link);
             var totalNumber = total.Count;
 
-            int failedVideos = 0;
             int currentNumber = 0;
 
-            await foreach (var video in youtube.Playlists.GetVideosAsync(playlistData.Id))
+            try
             {
-                currentNumber++;
-                var title = video.Title.Replace("\"", "'").Replace("\\", "").Replace("/", "").Replace(":", "").Replace("*", "").Replace("?", "").Replace("<", "").Replace(">", "").Replace("|", "");
+                // Foreach video in the playlist try to download them as the desired format
+                await foreach (var video in youtube.Playlists.GetVideosAsync(playlistData.Id))
+                {
+                    currentNumber++;
+                    var title = ReplaceInvalidCharacters(video.Title);
 
-                var progress = new Progress<double>(percent =>
-                {
-                    downloadProgress.Value = Convert.ToInt32(percent * 100.00f);
-                    status.Text = "Downloading... " + currentNumber + "/" + totalNumber + " - " + Convert.ToInt32(percent * 100.00f) + "%";
-                });
-
-                try
-                {
-                    await youtube.Videos.DownloadAsync(video.Id, $"{downloadPath}\\{title}.{downloadFormat}", o => o.SetFormat(downloadFormat).SetPreset(ConversionPreset.UltraFast), progress);
-                }
-                catch (Exception ex)
-                {
-                    new Thread(() =>
+                    var progress = new Progress<double>(percent =>
                     {
-                        failedVideos++;
-                        failedVideosTitles.Add($"\"{title}\"");
+                        // To split the progress bar into two halves, fill one half and then the next,
+                        // maximum of both progress bars is 50
+                        if (downloadProgressOne.Value != 50)
+                        {
+                            downloadProgressOne.Value = percent * 100.00f;
+                        }
+                        else
+                        {
+                            downloadProgressTwo.Value = (percent * 100.00f) - 50;
+                        }
 
-                        MessageBox.Show($"Skipping download of video: \"{title}\" due to an error.\n\nReason: \"{ex.Message}\".", "Downloader", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        // Taskbar icon progress bar
+                        taskbarIcon.ProgressValue = percent;
 
-                    }).Start();
+                        status.Text = "Downloading... " + currentNumber + "/" + totalNumber + " - " + Convert.ToInt32(percent * 100.00f) + "%";
+                    });
+
+                    try
+                    {
+                        // Download content
+                        await youtube.Videos.DownloadAsync(video.Id, $"{path}\\{title}.{format}", o => o.SetFormat(format).SetPreset(ConversionPreset.UltraFast), progress);
+                    }
+                    catch (Exception ex)
+                    {
+                        new Thread(() =>
+                        {
+                            // Increase the failed videos amount by one and add the title to the list
+                            failedVideosAmount++;
+                            failedVideosTitles.Add($"\"{title}\"");
+
+                            MessageBox.Show($"Skipping download of video: \"{title}\" due to an error.\n\nReason: \"{ex.Message}\".", "Downloader", MessageBoxButton.OK, MessageBoxImage.Warning);
+
+                        }).Start();
+                    }
                 }
             }
-
-            if (failedVideos == 0)
+            catch (TaskCanceledException)
             {
                 new Thread(() =>
                 {
-                    MessageBox.Show($"Successfully downloaded playlist: \"{playlistName}\".", "Downloader", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show($"Successfully cancelled the download of playlist: \"{playlistName}\".\n\nFiles have not been deleted.", "Downloader", MessageBoxButton.OK, MessageBoxImage.Information);
 
                 }).Start();
+
+                return;
             }
-            else
+
+            if (failedVideosAmount != 0)
             {
                 new Thread(() =>
                 {
-                    MessageBox.Show($"Downloaded playlist: \"{playlistName}\" but failed to download {failedVideos} of the videos.\n\nPress OK to see list of failed videos.", "Downloader", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    // Show a messagebox telling the user it failed to download X amount of videos
+                    MessageBox.Show($"Downloaded playlist: \"{playlistName}\" but failed to download {failedVideosAmount} of the videos.\n\nPress OK to see list of failed videos.", "Downloader", MessageBoxButton.OK, MessageBoxImage.Warning);
 
+                    // Loop for the length of the string list, build a final string containing
+                    // a list of titles of failed videos then display it in a messagebox for the user
                     for (int i = 0; i < failedVideosTitles.Count; i++)
                     {
                         if (i == 0) { finalList = $"{finalList}{i + 1}. {failedVideosTitles[i]}."; }
@@ -228,30 +265,90 @@ namespace Downloader
 
                 }).Start();
             }
+            else
+            {
+                new Thread(() =>
+                {
+                    // The entire playlist was downloaded successfully
+                    MessageBox.Show($"Successfully downloaded playlist: \"{playlistName}\".", "Downloader", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                }).Start();
+            }
         }
 
-        private void MP3Checked(object sender, RoutedEventArgs e)
+        public static string ReplaceInvalidCharacters(string text)
         {
-            Properties.Settings.Default.savedFileType = "MP3";
-            Properties.Settings.Default.Save();
+            return text.Replace("\"", "'").Replace("\\", "").Replace("/", "").Replace(":", "").Replace("*", "").Replace("?", "").Replace("<", "").Replace(">", "").Replace("|", "");
         }
 
-        private void MP4Checked(object sender, RoutedEventArgs e)
+        public void ChangeButtonStates(bool state)
         {
-            Properties.Settings.Default.savedFileType = "MP4";
-            Properties.Settings.Default.Save();
+            // Toggle the usability of the controls
+            if (!state)
+            {
+                taskbarIcon.ProgressState = System.Windows.Shell.TaskbarItemProgressState.Normal;
+                MinHeight = 280;
+                cancelButtonGrid.Visibility = Visibility.Visible;
+                downloadInfo.Visibility = Visibility.Visible;
+                directorySelect.IsEnabled = false;
+                startDownload.IsEnabled = false;
+                saveMP3.IsEnabled = false;
+                saveMP4.IsEnabled = false;
+                status.Text = "Downloading... 0%";
+            }
+            else
+            {
+                taskbarIcon.ProgressState = System.Windows.Shell.TaskbarItemProgressState.None;
+                MinHeight = 200;
+                Height = 200;
+                cancelButtonGrid.Visibility = Visibility.Collapsed;
+                downloadInfo.Visibility = Visibility.Collapsed;
+                directorySelect.IsEnabled = true;
+                startDownload.IsEnabled = true;
+                saveMP3.IsEnabled = true;
+                saveMP4.IsEnabled = true;
+                status.Text = "";
+                videoLink.Text = "";
+                videoLink.Focus();
+                directoryBox.Focus();
+                downloadProgressOne.Value = 0;
+                downloadProgressTwo.Value = 0;
+            }
         }
 
         private void DownloaderLoaded(object sender, RoutedEventArgs e)
         {
-            downloadPath = Properties.Settings.Default.savedDirectory;
+            if (!string.IsNullOrEmpty(Properties.Settings.Default.savedDirectory))
+                directoryBox.Text = Properties.Settings.Default.savedDirectory;
 
-            downloadInfo.Height = new GridLength(0);
-            this.Height = 190;
+            if (Properties.Settings.Default.savedFileType == "MP3")
+                saveMP3.IsChecked = true;
 
-            if (Properties.Settings.Default.savedDirectory != "") { directoryBox.Text = Properties.Settings.Default.savedDirectory; }
-            if (Properties.Settings.Default.savedFileType == "MP3") { saveMP3.IsChecked = true; }
-            if (Properties.Settings.Default.savedFileType == "MP4") { saveMP4.IsChecked = true; }
+            if (Properties.Settings.Default.savedFileType == "MP4")
+                saveMP4.IsChecked = true;
+        }
+
+        private void LinkHint(object sender, RoutedEventArgs e)
+        {
+            TextBox txtbx = (TextBox)sender;
+
+            if (!txtbx.IsFocused)
+            {
+                if (string.IsNullOrEmpty(txtbx.Text))
+                    videoLinkHint.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                videoLinkHint.Visibility = Visibility.Hidden;
+            }
+        }
+
+        private void CancelButtonClick(object sender, RoutedEventArgs e)
+        {
+            cancellationToken = cancellationTokenSource.Token;
+            cancellationTokenSource.Cancel();
+            cancellationTokenSource = new CancellationTokenSource();
+
         }
 
         private void TopBar(object sender, MouseButtonEventArgs e)
@@ -259,24 +356,87 @@ namespace Downloader
             this.DragMove();
         }
 
-        private void ExitButton(object sender, RoutedEventArgs e)
+        private void TopBarMouseMove(object sender, MouseEventArgs e)
         {
-            this.Close();
+            // If the user tries to drag and move the window while in maximised mode, return the window state to normal first
+            if (e.LeftButton == MouseButtonState.Pressed)
+            {
+                if (WindowState == WindowState.Maximized)
+                {
+                    WindowState = WindowState.Normal;
+
+                    System.Drawing.Point mousePosition = System.Windows.Forms.Control.MousePosition;
+                    Left = mousePosition.X - (Width / 2);
+                    Top = mousePosition.Y - (topBar.Height.Value / 2);
+                }
+
+                DragMove();
+            }
         }
 
-        private void MinimiseButton(object sender, RoutedEventArgs e)
+        private void ControlBarButton(object sender, RoutedEventArgs e)
         {
-            this.WindowState = WindowState.Minimized;
+            Button btn = (Button)sender;
+
+            // Perform action depending on the button name from sender
+            switch (btn.Name)
+            {
+                case "minimiseButton":
+                    this.WindowState = WindowState.Minimized;
+                    break;
+                case "restoreButton":
+                    this.WindowState = WindowState.Normal;
+                    break;
+                case "maximiseButton":
+                    this.WindowState = WindowState.Maximized;
+                    break;
+                case "exitButton":
+                    this.Close();
+                    break;
+            }
         }
 
-        private void VideoLinkLostFocus(object sender, RoutedEventArgs e)
+        private void DownloaderStateChanged(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(videoLink.Text)) { videoLinkHint.Visibility = Visibility.Visible; }
+            // If the window is maximised change the margin on the main grid, otherwise it's too close to the edges
+            if (WindowState == WindowState.Maximized)
+            {
+                mainGrid.Margin = new Thickness(8);
+
+                // Hide the maximise button image and show the restore window button image
+                maximiseButton.Visibility = Visibility.Collapsed;
+                restoreButton.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                mainGrid.Margin = new Thickness(0);
+
+                // Show the maximise button image and hide the restore window button image
+                maximiseButton.Visibility = Visibility.Visible;
+                restoreButton.Visibility = Visibility.Collapsed;
+            }
         }
 
-        private void VideoLinkGotFocus(object sender, RoutedEventArgs e)
+        private void DownloaderActivated(object sender, EventArgs e)
         {
-            videoLinkHint.Visibility = Visibility.Hidden;
+            // Needed for a borderless window with custom chrome window style otherwise there are black bars
+            SizeToContent = SizeToContent.Manual;
+
+            Height = 200;
+        }
+
+        private void DownloaderClosing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            e.Cancel = true;
+
+            if (saveMP3.IsChecked == true)
+                Properties.Settings.Default.savedFileType = "MP3";
+            else
+                Properties.Settings.Default.savedFileType = "MP4";
+
+            Properties.Settings.Default.Save();
+
+            e.Cancel = false;
         }
     }
 }

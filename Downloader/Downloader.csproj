@@ -9,10 +9,12 @@
 	<ApplicationManifest>app.manifest</ApplicationManifest>
 	<ApplicationIcon>D:\Programming\Downloaders\Simple Downloader\Downloader\Resources\Icon.ico</ApplicationIcon>
 	<AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
+	<AssemblyVersion>1.0.1</AssemblyVersion>
+	<FileVersion>1.0.1</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="ffmpeg.exe" />
+    <None Remove="Fonts\Signika.ttf" />
     <None Remove="Resources\Arrow.png" />
     <None Remove="Resources\Arrow_Hover.png" />
     <None Remove="Resources\Arrow_Pressed.png" />
@@ -20,8 +22,14 @@
     <None Remove="Resources\Folder.png" />
     <None Remove="Resources\Icon.ico" />
     <None Remove="Resources\Link.png" />
+    <None Remove="Resources\Maximise.png" />
     <None Remove="Resources\Minimise.png" />
     <None Remove="Resources\Mountains.jpg" />
+    <None Remove="Resources\Restore.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\.editorconfig" Link=".editorconfig" />
   </ItemGroup>
 
   <ItemGroup>
@@ -30,9 +38,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="ffmpeg.exe">
+    <Resource Include="Fonts\Signika.ttf">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
+    </Resource>
     <Resource Include="Resources\Arrow.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
@@ -54,10 +62,16 @@
     <Resource Include="Resources\Link.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
+    <Resource Include="Resources\Maximise.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="Resources\Minimise.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Resources\Mountains.jpg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Resources\Restore.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
   </ItemGroup>
@@ -83,6 +97,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="ffmpeg.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

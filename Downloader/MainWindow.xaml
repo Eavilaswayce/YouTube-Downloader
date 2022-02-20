@@ -3,28 +3,41 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Downloader"
         mc:Ignorable="d"
         Title="MainWindow"
-        Width="600" Height="190"
+        MinWidth="600"
+        MinHeight="200"
+        SizeToContent="WidthAndHeight"
         Background="Transparent"
         WindowStartupLocation="CenterScreen"
-        FontFamily="Bahnschrift Light"
+        FontFamily="Fonts\#Signika"
+        FontWeight="Light"
         FontSize="16"
-        Loaded="DownloaderLoaded">
+        Loaded="DownloaderLoaded"
+        Activated="DownloaderActivated"
+        StateChanged="DownloaderStateChanged"
+        Closing="DownloaderClosing">
 
+    <!-- Create a borderless window but keep animations -->
     <WindowChrome.WindowChrome>
         <WindowChrome
                 GlassFrameThickness="1"
                 CornerRadius="0"
                 CaptionHeight="0"
-                ResizeBorderThickness="0"
+                ResizeBorderThickness="10"
                 UseAeroCaptionButtons="False"/>
-
+        
     </WindowChrome.WindowChrome>
 
-    <Grid>
+    <!-- Taskbar item info -->
+    <Window.TaskbarItemInfo>
+        <TaskbarItemInfo x:Name="taskbarIcon"
+                         Description="YouTube Downloader"/>
         
+    </Window.TaskbarItemInfo>
+
+    <Grid x:Name="mainGrid">
+
         <!-- Blurred background image -->
         <Grid.Background>
             <VisualBrush Viewbox="0.2,0.2,0.5,0.5">
@@ -40,227 +53,274 @@
 
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="35"/>
-                <RowDefinition Height="10*"/>
+                <RowDefinition x:Name="topBar" Height="35"/>
+                <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <Border
-                CornerRadius="6,6,0,0"
-                MouseLeftButtonDown="TopBar">
-                
-                <Border.Background>
-                    <SolidColorBrush Color="Black" Opacity="0.1"/>
-                </Border.Background>
+            <Grid MouseMove="TopBarMouseMove"
+                  MouseLeftButtonDown="TopBar"
+                  Background="#20000000">
 
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="0.7*"/>
-                        <ColumnDefinition Width="6*"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="60"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="140"/>
+                </Grid.ColumnDefinitions>
 
-                    <!-- Top drag bar -->
-                    <WrapPanel
+                <!-- Top drag bar -->
+                <WrapPanel
                         Grid.Column="2"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Center">
-                        
-                        <!-- Minimise button -->
-                        <Button 
-                            Style="{DynamicResource ImageButton}"
-                            Click="MinimiseButton"
+
+                    <!-- Minimise button -->
+                    <Button x:Name="minimiseButton"
+                            Click="ControlBarButton"
                             Width="15"
                             Height="15"
-                            RenderOptions.BitmapScalingMode="HighQuality"/>
+                            Margin="15,0,0,0"
+                            BorderThickness="0"
+                            Style="{DynamicResource MinimiseButton}"/>
 
-                        <!-- Exit button -->
-                        <Button 
-                            Style="{DynamicResource ExitButton}"
-                            Click="ExitButton"
+                    <!-- Restore button -->
+                    <Button x:Name="restoreButton"
+                            Click="ControlBarButton"
+                            RenderOptions.BitmapScalingMode="Fant"
                             Width="15"
                             Height="15"
-                            Margin="20,0,15,0"
-                            RenderOptions.BitmapScalingMode="HighQuality">
-                        </Button>
-                    </WrapPanel>
+                            Margin="15,0,0,0"
+                            BorderThickness="0"
+                            Visibility="Collapsed"
+                            Style="{DynamicResource RestoreButton}" />
 
-                    <!-- Icon image -->
-                    <Image
-                        Source="Resources\Icon.ico"
-                        RenderOptions.BitmapScalingMode="Fant"
-                        HorizontalAlignment="Left"
-                        Width="20"
-                        Height="20"
-                        Margin="15,0,0,0"/>
+                    <!-- Maximise button -->
+                    <Button x:Name="maximiseButton"
+                            Click="ControlBarButton"
+                            RenderOptions.BitmapScalingMode="Fant"
+                            Width="15"
+                            Height="15"
+                            Margin="15,0,0,0"
+                            BorderThickness="0"
+                            Style="{DynamicResource MaximiseButton}"/>
 
-                </Grid>
-            </Border>
+                    <!-- Exit button -->
+                    <Button x:Name="exitButton"
+                            Click="ControlBarButton"
+                            RenderOptions.BitmapScalingMode="Fant"
+                            Width="15"
+                            Height="15"
+                            Margin="15,0,15,0"
+                            BorderThickness="0"
+                            Style="{DynamicResource ExitButton}"/>
+
+                </WrapPanel>
+
+                <!-- Icon image -->
+                <Image Source="Resources\Icon.ico"
+                       RenderOptions.BitmapScalingMode="Fant"
+                       HorizontalAlignment="Left"
+                       Width="20"
+                       Height="20"
+                       Margin="15,0,0,0"/>
+
+            </Grid>
 
             <!-- Main content -->
             <Grid Grid.Row="1">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="76"/>
-                    <RowDefinition Height="76"/>
-                    <RowDefinition x:Name="downloadInfo" Height="76"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="auto"/>
                 </Grid.RowDefinitions>
 
-                <!-- Input YouTube link box-->
-                <TextBox
-                    Style="{DynamicResource PrimaryTextBox}"
-                    VerticalContentAlignment="Center"
-                    x:Name="videoLink"
-                    Foreground="White"
-                    CaretBrush="White"
-                    Background="#10000000"
-                    Height="35"
-                    Margin="20"
-                    Padding="34,0,34,-1"
-                    KeyDown="VideoLinkKeyDown"
-                    LostFocus="VideoLinkLostFocus"
-                    GotFocus="VideoLinkGotFocus"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <!-- Input YouTube link box-->
+                    <TextBox x:Name="videoLink"
+                             Height="35"
+                             Margin="20"
+                             Padding="34,0,34,0"
+                             VerticalContentAlignment="Center"
+                             Background="#20000000"
+                             Foreground="White"
+                             CaretBrush="White"
+                             KeyDown="VideoLinkKeyDown"
+                             GotFocus="LinkHint"
+                             LostFocus="LinkHint"
+                             Style="{DynamicResource PrimaryTextBox}"/>
 
-                <!-- Hint for YouTube link box -->
-                <TextBlock
-                    x:Name="videoLinkHint"
-                    Foreground="White"
-                    Background="Transparent"
-                    Text="Type your YouTube link here"
-                    IsHitTestVisible="False"
-                    Height="28"
-                    Margin="25"
-                    Padding="33,4,34,0"/>
+                    <!-- Hint for YouTube link box -->
+                    <TextBlock x:Name="videoLinkHint"
+                               Margin="20"
+                               Padding="37,1,0,0"
+                               VerticalAlignment="Center"
+                               Background="Transparent"
+                               Foreground="White"
+                               Text="Paste a YouTube link here..."
+                               IsHitTestVisible="False"/>
 
-                <!-- Link icon -->
-                <Image
-                    Source="Resources\Link.png"
-                    RenderOptions.BitmapScalingMode="HighQuality"
-                    HorizontalAlignment="Left"
-                    Width="18"
-                    Margin="30,0,0,0"/>
+                    <!-- Link icon -->
+                    <Image Source="Resources\Link.png"
+                           RenderOptions.BitmapScalingMode="Fant"
+                           HorizontalAlignment="Left"
+                           Width="18"
+                           Margin="30,0,0,0"/>
 
-                <!-- Begin download button -->
-                <Button Style="{DynamicResource EnterButton}"
-                    HorizontalAlignment="Right"
-                    x:Name="startDownload"
-                    Width="18"
-                    Height="18"
-                    Margin="0,0,30,1"
-                    BorderThickness="0"
-                    Click="DownloadButtonClick"
-                    RenderOptions.BitmapScalingMode="HighQuality">
+                    <!-- Begin download button -->
+                    <Button x:Name="startDownload"
+                            Click="DownloadButtonClick"
+                            RenderOptions.BitmapScalingMode="Fant"
+                            Width="18"
+                            Height="18"
+                            Margin="0,28,30,30"
+                            HorizontalAlignment="Right"
+                            BorderThickness="0"
+                            Style="{DynamicResource EnterButton}"/>
 
-                    <Button.Background>
-                        <ImageBrush ImageSource="Resources\Arrow.png"/>
-                    </Button.Background>
-                </Button>
+                    <Grid x:Name="cancelButtonGrid" 
+                          Grid.Column="1"
+                          Visibility="Collapsed">
+                        
+                        <!-- Cancel download button -->
+                        <Button Style="{DynamicResource CancelButton}" Grid.Column="1"
+                            Click="CancelButtonClick"
+                            Height="35"
+                            Margin="0,20,20,20"
+                            Padding="15,0,15,0"
+                            Foreground="#EEEADE"
+                            Content="Cancel"/>
+                    </Grid>
+
+                </Grid>
 
                 <!-- Grid for directory and format buttons -->
                 <Grid Grid.Row="1">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="2.8*"/>
                         <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="160"/>
                     </Grid.ColumnDefinitions>
 
                     <!-- Directory textbox -->
-                    <TextBox
-                        Grid.Row="1"
-                        Style="{DynamicResource PrimaryTextBox}"
-                        VerticalContentAlignment="Center"
-                        x:Name="directoryBox"
-                        Foreground="White"
-                        CaretBrush="White"
-                        Background="#10000000"
-                        Height="35"
-                        IsReadOnly="True"
-                        Cursor="Arrow"
-                        Text="Directory"
-                        Margin="20,20,10,20"
-                        Padding="34,0,34,-1"/>
+                    <TextBox Grid.Row="1"
+                             x:Name="directoryBox"
+                             Height="35"
+                             Margin="20,20,10,20"
+                             Padding="34,0,34,0"
+                             VerticalContentAlignment="Center"
+                             Foreground="White"
+                             CaretBrush="White"
+                             Background="#20000000"
+                             IsReadOnly="True"
+                             Cursor="Arrow"
+                             Text="Directory"
+                             Style="{DynamicResource PrimaryTextBox}"/>
 
                     <!-- Folder icon -->
-                    <Image
-                        Grid.Row="1"
-                        Source="Resources\Folder.png"
-                        RenderOptions.BitmapScalingMode="HighQuality"
-                        HorizontalAlignment="Left"
-                        Width="18"
-                        Margin="30,0,0,0"/>
+                    <Image Grid.Row="1"
+                           Source="Resources\Folder.png"
+                           RenderOptions.BitmapScalingMode="Fant"
+                           HorizontalAlignment="Left"
+                           Width="18"
+                           Margin="30,0,0,0"/>
 
                     <!-- Select directory button -->
-                    <Button
-                        Style="{DynamicResource EnterButton}"
-                        Grid.Row="1"
-                        x:Name="directorySelect"
-                        HorizontalAlignment="Right"
-                        Width="18"
-                        Height="18"
-                        Margin="0,0,20,1"
-                        BorderThickness="0"
-                        Click="SelectDirectory"
-                        RenderOptions.BitmapScalingMode="Fant">
-
-                        <Button.Background>
-                            <ImageBrush ImageSource="Resources\Arrow.png"/>
-                        </Button.Background>
-                    </Button>
+                    <Button Grid.Row="1"
+                            x:Name="directorySelect"
+                            Click="SelectDirectory"
+                            RenderOptions.BitmapScalingMode="Fant"
+                            Width="18"
+                            Height="18"
+                            Margin="0,0,20,1"
+                            HorizontalAlignment="Right"
+                            BorderThickness="0"
+                            Style="{DynamicResource EnterButton}"/>
 
                     <!-- Select MP3 file type -->
-                    <RadioButton
-                        Style="{DynamicResource RadioButton}" 
-                        Grid.Column="1"
-                        x:Name="saveMP3"
-                        VerticalAlignment="Center"
-                        HorizontalAlignment="Left"
-                        Content=" .MP3"
-                        Foreground="White"
-                        Margin="10,20,20,20"
-                        Padding="0"
-                        Checked="MP3Checked"/>
+                    <RadioButton Grid.Column="1"
+                                 x:Name="saveMP3"
+                                 Margin="10,20,20,20"
+                                 Padding="0"
+                                 VerticalAlignment="Center"
+                                 HorizontalAlignment="Left"
+                                 Content=" .MP3"
+                                 Foreground="White"
+                                 Style="{DynamicResource RadioButton}"/>
 
                     <!-- Select MP4 file type -->
-                    <RadioButton
-                        Style="{DynamicResource RadioButton}" 
-                        Grid.Column="1"
-                        x:Name="saveMP4"
-                        VerticalAlignment="Center"
-                        HorizontalAlignment="Right"
-                        Content=" .MP4"
-                        Foreground="White"
-                        Margin="20"
-                        Padding="0"
-                        Checked="MP4Checked"/>
+                    <RadioButton Grid.Column="1"
+                                 x:Name="saveMP4"
+                                 Margin="20"
+                                 Padding="0"
+                                 VerticalAlignment="Center"
+                                 HorizontalAlignment="Right"
+                                 Content=" .MP4"
+                                 Foreground="White"
+                                 Style="{DynamicResource RadioButton}"/>
                 </Grid>
 
-                <!-- Progress bar -->
-                <ProgressBar
-                    Style="{DynamicResource PrimaryProgressBar}"
-                    x:Name="downloadProgress"
-                    VerticalAlignment="Top"
-                    Grid.Row="2"
-                    Height="4"
-                    Margin="20,20,20,0"/>
+                <!-- Grid for status text and download progress -->
+                <Grid x:Name="downloadInfo"
+                      Grid.Row="2"
+                      Visibility="Collapsed">
 
-                <!-- Progress bar outline -->
-                <ProgressBar
-                    Style="{DynamicResource PrimaryProgressBar}"
-                    VerticalAlignment="Top"
-                    Background="Transparent"
-                    BorderThickness="1"
-                    BorderBrush="#20000000"
-                    Grid.Row="2"
-                    Height="4"
-                    Margin="20,20,20,0"/>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <!-- Progress bar first half -->
+                    <ProgressBar x:Name="downloadProgressOne"
+                                 Height="4"
+                                 Margin="20,30,20,30"
+                                 VerticalAlignment="Center"
+                                 Maximum="50"
+                                 Style="{DynamicResource PrimaryProgressBar}"/>
 
-                <!-- Download status text -->
-                <TextBlock
-                    Grid.Row="2"
-                    x:Name="status"
-                    VerticalAlignment="Bottom"
-                    Height="20"
-                    Margin="20,0,20,6"
-                    Foreground="White"
-                    TextAlignment="Center"
-                    Text="- Status -"/>
+                    <!-- Progress bar outline first half -->
+                    <ProgressBar Height="4"
+                                 Margin="20,30,20,30"
+                                 VerticalAlignment="Center"
+                                 Background="Transparent"
+                                 BorderBrush="#20000000"
+                                 BorderThickness="1"
+                                 Style="{DynamicResource PrimaryProgressBar}"/>
+
+                    <!-- Progress bar second half -->
+                    <ProgressBar x:Name="downloadProgressTwo"
+                                 Grid.Column="2"
+                                 Height="4"
+                                 Margin="20,30,20,30"
+                                 VerticalAlignment="Center"
+                                 Maximum="50"
+                                 Style="{DynamicResource PrimaryProgressBar}"/>
+
+                    <!-- Progress bar outline second half -->
+                    <ProgressBar Grid.Column="2"
+                                 Height="4"
+                                 Margin="20,30,20,30"
+                                 VerticalAlignment="Center"
+                                 Background="Transparent"
+                                 BorderBrush="#20000000"
+                                 BorderThickness="1"
+                                 Style="{DynamicResource PrimaryProgressBar}"/>
+
+                    <!-- Download status text -->
+                    <TextBlock Grid.Column="1"
+                               x:Name="status"
+                               Margin="0,30,0,30"
+                               Padding="0,0,0,2"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Center"
+                               Foreground="White"
+                               Background="Transparent"
+                               TextAlignment="Center"
+                               Text="- Status -"/>
+                </Grid>
             </Grid>
         </Grid>
     </Grid>

@@ -133,6 +133,16 @@ namespace Downloader.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Maximise {
+            get {
+                object obj = ResourceManager.GetObject("Maximise", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Minimise {
             get {
                 object obj = ResourceManager.GetObject("Minimise", resourceCulture);
@@ -146,6 +156,16 @@ namespace Downloader.Properties {
         internal static System.Drawing.Bitmap Mountains {
             get {
                 object obj = ResourceManager.GetObject("Mountains", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Restore {
+            get {
+                object obj = ResourceManager.GetObject("Restore", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
