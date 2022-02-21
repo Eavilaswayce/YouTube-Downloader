@@ -7,7 +7,7 @@
 	<UseWPF>true</UseWPF>
 	<UseWindowsForms>true</UseWindowsForms>
 	<ApplicationManifest>app.manifest</ApplicationManifest>
-	<ApplicationIcon>D:\Programming\Downloaders\Simple Downloader\Downloader\Resources\Icon.ico</ApplicationIcon>
+	<ApplicationIcon>Resources\Icon.ico</ApplicationIcon>
 	<AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
 	<AssemblyVersion>1.0.2</AssemblyVersion>
 	<FileVersion>1.0.2</FileVersion>
@@ -29,7 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\.editorconfig" Link=".editorconfig" />
+    <Content Include="Resources\Icon.ico" />
   </ItemGroup>
 
   <ItemGroup>

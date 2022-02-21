@@ -14,14 +14,14 @@ using YoutubeExplode.Converter;
 namespace Downloader
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Interaction logic for Downloader.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainDownloader : Window
     {
         CancellationTokenSource cancellationTokenSource = new();
         CancellationToken cancellationToken;
 
-        public MainWindow()
+        public MainDownloader()
         {
             InitializeComponent();
         }
