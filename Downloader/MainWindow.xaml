@@ -270,7 +270,7 @@
                 <!-- Grid for status text and download progress -->
                 <Grid x:Name="downloadInfo"
                       Grid.Row="2"
-                      Visibility="Collapsed">
+                      >
 
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -284,15 +284,7 @@
                                  Margin="20,30,20,30"
                                  VerticalAlignment="Center"
                                  Maximum="50"
-                                 Style="{DynamicResource PrimaryProgressBar}"/>
-
-                    <!-- Progress bar outline first half -->
-                    <ProgressBar Height="4"
-                                 Margin="20,30,20,30"
-                                 VerticalAlignment="Center"
-                                 Background="Transparent"
-                                 BorderBrush="#20000000"
-                                 BorderThickness="1"
+                                 BorderThickness="0"
                                  Style="{DynamicResource PrimaryProgressBar}"/>
 
                     <!-- Progress bar second half -->
@@ -302,16 +294,7 @@
                                  Margin="20,30,20,30"
                                  VerticalAlignment="Center"
                                  Maximum="50"
-                                 Style="{DynamicResource PrimaryProgressBar}"/>
-
-                    <!-- Progress bar outline second half -->
-                    <ProgressBar Grid.Column="2"
-                                 Height="4"
-                                 Margin="20,30,20,30"
-                                 VerticalAlignment="Center"
-                                 Background="Transparent"
-                                 BorderBrush="#20000000"
-                                 BorderThickness="1"
+                                 BorderThickness="0"
                                  Style="{DynamicResource PrimaryProgressBar}"/>
 
                     <!-- Download status text -->
