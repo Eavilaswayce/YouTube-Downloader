@@ -345,11 +345,11 @@
         </Style>
         <SolidColorBrush x:Key="CancelButton.Static.Background" Color="#20000000"/>
         <SolidColorBrush x:Key="CancelButton.Static.Border" Color="#EEEADE"/>
-        <SolidColorBrush x:Key="CancelButton.MouseOver.Background" Color="#20000000"/>
+        <SolidColorBrush x:Key="CancelButton.MouseOver.Background" Color="#30000000"/>
         <SolidColorBrush x:Key="CancelButton.MouseOver.Border" Color="#EEEADE"/>
-        <SolidColorBrush x:Key="CancelButton.Pressed.Background" Color="#20000000"/>
+        <SolidColorBrush x:Key="CancelButton.Pressed.Background" Color="#40000000"/>
         <SolidColorBrush x:Key="CancelButton.Pressed.Border" Color="#EEEADE"/>
-        <SolidColorBrush x:Key="CancelButton.Disabled.Background" Color="#20000000"/>
+        <SolidColorBrush x:Key="CancelButton.Disabled.Background" Color="#40000000"/>
         <SolidColorBrush x:Key="CancelButton.Disabled.Border" Color="#EEEADE"/>
         <SolidColorBrush x:Key="CancelButton.Disabled.Foreground" Color="#EEEADE"/>
         <Style x:Key="CancelButton" TargetType="{x:Type Button}">

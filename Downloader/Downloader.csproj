@@ -9,8 +9,8 @@
 	<ApplicationManifest>app.manifest</ApplicationManifest>
 	<ApplicationIcon>D:\Programming\Downloaders\Simple Downloader\Downloader\Resources\Icon.ico</ApplicationIcon>
 	<AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
-	<AssemblyVersion>1.0.1</AssemblyVersion>
-	<FileVersion>1.0.1</FileVersion>
+	<AssemblyVersion>1.0.2</AssemblyVersion>
+	<FileVersion>1.0.2</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

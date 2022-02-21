@@ -78,6 +78,8 @@ namespace Downloader
 
             ChangeButtonStates(false);
 
+            cancellationToken = cancellationTokenSource.Token;
+
             try
             {
                 // If the given URL contains "&list" this means it is part of a playlist
@@ -345,7 +347,6 @@ namespace Downloader
 
         private void CancelButtonClick(object sender, RoutedEventArgs e)
         {
-            cancellationToken = cancellationTokenSource.Token;
             cancellationTokenSource.Cancel();
             cancellationTokenSource = new CancellationTokenSource();
 
