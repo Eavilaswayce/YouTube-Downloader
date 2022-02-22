@@ -68,7 +68,15 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="140"/>
                 </Grid.ColumnDefinitions>
-
+ 
+                <!-- Icon image -->
+                <Image Source="Resources\Icon.ico"
+                       RenderOptions.BitmapScalingMode="Fant"
+                       HorizontalAlignment="Left"
+                       Width="20"
+                       Height="20"
+                       Margin="15,0,0,0"/>
+                
                 <!-- Top drag bar -->
                 <WrapPanel
                         Grid.Column="2"
@@ -116,15 +124,6 @@
                             Style="{DynamicResource ExitButton}"/>
 
                 </WrapPanel>
-
-                <!-- Icon image -->
-                <Image Source="Resources\Icon.ico"
-                       RenderOptions.BitmapScalingMode="Fant"
-                       HorizontalAlignment="Left"
-                       Width="20"
-                       Height="20"
-                       Margin="15,0,0,0"/>
-
             </Grid>
 
             <!-- Main content -->

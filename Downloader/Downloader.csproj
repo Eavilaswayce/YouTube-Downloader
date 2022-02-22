@@ -29,10 +29,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Resources\Icon.ico" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="YoutubeExplode" Version="6.0.7" />
     <PackageReference Include="YoutubeExplode.Converter" Version="6.0.7" />
   </ItemGroup>
