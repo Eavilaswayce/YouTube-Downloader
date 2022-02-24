@@ -16,12 +16,12 @@ namespace Downloader
     /// <summary>
     /// Interaction logic for Downloader.xaml
     /// </summary>
-    public partial class MainDownloader : Window
+    public partial class DownloadWindow : Window
     {
         CancellationTokenSource cancellationTokenSource = new();
         CancellationToken cancellationToken;
 
-        public MainDownloader()
+        public DownloadWindow()
         {
             InitializeComponent();
         }
