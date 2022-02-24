@@ -132,7 +132,7 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="*"/>
-                    <RowDefinition Height="auto"/>
+                    <RowDefinition x:Name="downloadInfoRow" Height="auto"/>
                 </Grid.RowDefinitions>
 
                 <Grid>
@@ -267,7 +267,7 @@
                 </Grid>
 
                 <!-- Grid for status text and download progress -->
-                <Grid x:Name="downloadInfo"
+                <Grid x:Name="downloadInfoGrid"
                       Grid.Row="2"
                       Visibility="Collapsed" >
 

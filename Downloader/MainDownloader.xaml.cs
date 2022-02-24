@@ -290,8 +290,9 @@ namespace Downloader
             {
                 taskbarIcon.ProgressState = System.Windows.Shell.TaskbarItemProgressState.Normal;
                 MinHeight = 280;
+                downloadInfoRow.Height = new GridLength(1, GridUnitType.Star);
+                downloadInfoGrid.Visibility = Visibility.Visible;
                 cancelButtonGrid.Visibility = Visibility.Visible;
-                downloadInfo.Visibility = Visibility.Visible;
                 directorySelect.IsEnabled = false;
                 startDownload.IsEnabled = false;
                 saveMP3.IsEnabled = false;
@@ -303,8 +304,9 @@ namespace Downloader
                 taskbarIcon.ProgressState = System.Windows.Shell.TaskbarItemProgressState.None;
                 MinHeight = 200;
                 Height = 200;
+                downloadInfoRow.Height = GridLength.Auto;
+                downloadInfoGrid.Visibility = Visibility.Collapsed;
                 cancelButtonGrid.Visibility = Visibility.Collapsed;
-                downloadInfo.Visibility = Visibility.Collapsed;
                 directorySelect.IsEnabled = true;
                 startDownload.IsEnabled = true;
                 saveMP3.IsEnabled = true;
