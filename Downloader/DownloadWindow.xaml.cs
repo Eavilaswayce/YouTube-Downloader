@@ -201,6 +201,7 @@ namespace Downloader
                 if (File.Exists($"{path}\\{title}.{format}"))
                 {
                     downloadStatus.Text = $"Skipping {currentNumber}/{totalNumber}...";
+                    await Task.Delay(100);
                     continue;
                 }
 
