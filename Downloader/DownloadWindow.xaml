@@ -298,7 +298,7 @@
 
                     <!-- Download status text -->
                     <TextBlock Grid.Column="1"
-                               x:Name="status"
+                               x:Name="downloadStatus"
                                Margin="0,30,0,30"
                                Padding="0,0,0,2"
                                VerticalAlignment="Center"

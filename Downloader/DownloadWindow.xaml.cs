@@ -116,23 +116,23 @@ namespace Downloader
             var streamData = await youtube.Videos.GetAsync(link);
             var title = ReplaceInvalidCharacters(streamData.Title);
 
-            var progress = new Progress<double>(percent =>
+            var progress = new Progress<double>(value =>
             {
                 // To split the progress bar into two halves, fill one half and then the next,
                 // maximum of both progress bars is 50
                 if (downloadProgressOne.Value != 50)
                 {
-                    downloadProgressOne.Value = percent * 100.00f;
+                    downloadProgressOne.Value = value * 100.00f;
                 }
                 else
                 {
-                    downloadProgressTwo.Value = (percent * 100.00f) - 50;
+                    downloadProgressTwo.Value = (value * 100.00f) - 50;
                 }
 
                 // Taskbar icon progress bar
-                taskbarIcon.ProgressValue = percent;
+                taskbarIcon.ProgressValue = value;
 
-                status.Text = $"Downloading... {Convert.ToInt32(percent * 100.00f)}%";
+                downloadStatus.Text = $"Downloading... {Convert.ToInt32(value * 100.00f)}%";
             });
 
             try
@@ -152,11 +152,11 @@ namespace Downloader
 
                 return;
             }
-            catch (Exception es)
+            catch (Exception ex)
             {
                 new Thread(() =>
                 {
-                    MessageBox.Show($"Failed to download video: \"{title}\" due to an error.\n\nReason: \"{es.Message}\".", "Downloader", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show($"Failed to download video: \"{title}\" due to an error.\n\nReason: \"{ex.Message}\".", "Downloader", MessageBoxButton.OK, MessageBoxImage.Warning);
 
                 }).Start();
 
@@ -191,61 +191,64 @@ namespace Downloader
 
             int currentNumber = 0;
 
-            try
+            // Foreach video in the playlist try to download them as the desired format
+            await foreach (var video in youtube.Playlists.GetVideosAsync(playlistData.Id))
             {
-                // Foreach video in the playlist try to download them as the desired format
-                await foreach (var video in youtube.Playlists.GetVideosAsync(playlistData.Id))
+                currentNumber++;
+                var title = ReplaceInvalidCharacters(video.Title);
+
+                // Skip download of video if it already exists
+                if (File.Exists($"{path}\\{title}.{format}"))
                 {
-                    currentNumber++;
-                    var title = ReplaceInvalidCharacters(video.Title);
-
-                    var progress = new Progress<double>(percent =>
-                    {
-                        // To split the progress bar into two halves, fill one half and then the next,
-                        // maximum of both progress bars is 50
-                        if (downloadProgressOne.Value != 50)
-                        {
-                            downloadProgressOne.Value = percent * 100.00f;
-                        }
-                        else
-                        {
-                            downloadProgressTwo.Value = (percent * 100.00f) - 50;
-                        }
-
-                        // Taskbar icon progress bar
-                        taskbarIcon.ProgressValue = percent;
-
-                        status.Text = "Downloading... " + currentNumber + "/" + totalNumber + " - " + Convert.ToInt32(percent * 100.00f) + "%";
-                    });
-
-                    try
-                    {
-                        // Download content
-                        await youtube.Videos.DownloadAsync(video.Id, $"{path}\\{title}.{format}", o => o.SetFormat(format).SetPreset(ConversionPreset.UltraFast), progress);
-                    }
-                    catch (Exception ex)
-                    {
-                        new Thread(() =>
-                        {
-                            // Increase the failed videos amount by one and add the title to the list
-                            failedVideosAmount++;
-                            failedVideosTitles.Add($"\"{title}\"");
-
-                            MessageBox.Show($"Skipping download of video: \"{title}\" due to an error.\n\nReason: \"{ex.Message}\".", "Downloader", MessageBoxButton.OK, MessageBoxImage.Warning);
-
-                        }).Start();
-                    }
+                    downloadStatus.Text = $"Skipping {currentNumber}/{totalNumber}...";
+                    continue;
                 }
-            }
-            catch (TaskCanceledException)
-            {
-                new Thread(() =>
+
+                var progress = new Progress<double>(value =>
                 {
-                    MessageBox.Show($"Successfully cancelled the download of playlist: \"{playlistName}\".\n\nFiles have not been deleted.", "Downloader", MessageBoxButton.OK, MessageBoxImage.Information);
+                    // To split the progress bar into two halves, fill one half and then the next,
+                    // maximum of both progress bars is 50
+                    if (value < 0.5f || downloadProgressOne.Value < 50)
+                    {
+                        downloadProgressOne.Value = value * 100.00f;
+                        downloadProgressTwo.Value = 0;
+                    }
+                    else
+                        downloadProgressTwo.Value = (value * 100.00f) - 50;
 
-                }).Start();
+                    // Taskbar icon progress bar
+                    taskbarIcon.ProgressValue = value;
 
-                return;
+                    downloadStatus.Text = $"Downloading... {currentNumber}/{totalNumber} - {Convert.ToInt32(value * 100.00f)}%";
+                });
+
+                try
+                {
+                    // Download content
+                    await youtube.Videos.DownloadAsync(video.Id, $"{path}\\{title}.{format}", o => o.SetFormat(format).SetPreset(ConversionPreset.UltraFast), progress, cancellationToken);
+                }
+                catch (TaskCanceledException)
+                {
+                    new Thread(() =>
+                    {
+                        MessageBox.Show($"Successfully cancelled the download of playlist: \"{playlistName}\".\n\nFiles have not been deleted.", "Downloader", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                    }).Start();
+
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    new Thread(() =>
+                    {
+                        // Increase the failed videos amount by one and add the title to the list
+                        failedVideosAmount++;
+                        failedVideosTitles.Add($"\"{title}\"");
+
+                        MessageBox.Show($"Skipping download of video: \"{title}\" due to an error.\n\nReason: \"{ex.Message}\".", "Downloader", MessageBoxButton.OK, MessageBoxImage.Warning);
+
+                    }).Start();
+                }
             }
 
             if (failedVideosAmount != 0)
@@ -297,7 +300,7 @@ namespace Downloader
                 startDownload.IsEnabled = false;
                 saveMP3.IsEnabled = false;
                 saveMP4.IsEnabled = false;
-                status.Text = "Downloading... 0%";
+                downloadStatus.Text = "Downloading... 0%";
             }
             else
             {
@@ -311,7 +314,7 @@ namespace Downloader
                 startDownload.IsEnabled = true;
                 saveMP3.IsEnabled = true;
                 saveMP4.IsEnabled = true;
-                status.Text = "";
+                downloadStatus.Text = "";
                 videoLink.Text = "";
                 videoLink.Focus();
                 directoryBox.Focus();
