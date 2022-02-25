@@ -149,7 +149,6 @@ namespace Downloader
                 }).Start();
 
                 File.Delete($"{path}\\{title}.{format}");
-
                 return;
             }
             catch (Exception ex)
@@ -236,6 +235,7 @@ namespace Downloader
 
                     }).Start();
 
+                    File.Delete($"{path}\\{title}.{format}");
                     return;
                 }
                 catch (Exception ex)
