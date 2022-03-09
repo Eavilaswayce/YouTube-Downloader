@@ -9,8 +9,8 @@
 	<ApplicationManifest>app.manifest</ApplicationManifest>
 	<ApplicationIcon>Resources\Icon.ico</ApplicationIcon>
 	<AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
-	<AssemblyVersion>1.0.2</AssemblyVersion>
-	<FileVersion>1.0.2</FileVersion>
+	<AssemblyVersion>1.0.4</AssemblyVersion>
+	<FileVersion>1.0.4</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -29,8 +29,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="YoutubeExplode" Version="6.0.7" />
-    <PackageReference Include="YoutubeExplode.Converter" Version="6.0.7" />
+    <PackageReference Include="YoutubeExplode" Version="6.1.0" />
+    <PackageReference Include="YoutubeExplode.Converter" Version="6.1.0" />
   </ItemGroup>
 
   <ItemGroup>

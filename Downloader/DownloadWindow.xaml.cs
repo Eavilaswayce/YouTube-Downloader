@@ -13,9 +13,6 @@ using YoutubeExplode.Converter;
 
 namespace Downloader
 {
-    /// <summary>
-    /// Interaction logic for Downloader.xaml
-    /// </summary>
     public partial class DownloadWindow : Window
     {
         CancellationTokenSource cancellationTokenSource = new();
@@ -78,19 +75,15 @@ namespace Downloader
 
             ChangeButtonStates(false);
 
-            cancellationToken = cancellationTokenSource.Token;
-
             try
             {
-                // If the given URL contains "&list" this means it is part of a playlist
+                cancellationToken = cancellationTokenSource.Token;
+
+                // If the given URL contains "&list" it means it is playlist
                 if (!link.Contains("&list"))
-                {
-                    await DownloadSingle(link, downloadFormat, savedDirectory);
-                }
+                    await DownloadSingle(link, savedDirectory, downloadFormat);
                 else
-                {
-                    await DownloadPlaylist(link, downloadFormat, savedDirectory);
-                }
+                    await DownloadPlaylist(link, savedDirectory, downloadFormat);
             }
             catch (Exception ex)
             {
@@ -104,7 +97,7 @@ namespace Downloader
             ChangeButtonStates(true);
         }
 
-        public async Task DownloadSingle(string link, string format, string path)
+        public async Task DownloadSingle(string link, string path, string format)
         {
             // Needed for security
             var handler = new HttpClientHandler();
@@ -138,7 +131,7 @@ namespace Downloader
             try
             {
                 // Download content
-                await youtube.Videos.DownloadAsync(link, $"{path}\\{title}.{format}", o => o.SetFormat(format).SetPreset(ConversionPreset.UltraFast), progress, cancellationToken);
+                await youtube.Videos.DownloadAsync(link, $"{path}\\{title}.{format}", o => o.SetContainer(format).SetPreset(ConversionPreset.UltraFast), progress, cancellationToken);
             }
             catch (TaskCanceledException)
             {
@@ -169,7 +162,7 @@ namespace Downloader
             }).Start();
         }
 
-        public async Task DownloadPlaylist(string link, string format, string path)
+        public async Task DownloadPlaylist(string link, string path, string format)
         {
             // Create a string list incase any videos fail to download
             List<string> failedVideosTitles = new();
@@ -225,7 +218,7 @@ namespace Downloader
                 try
                 {
                     // Download content
-                    await youtube.Videos.DownloadAsync(video.Id, $"{path}\\{title}.{format}", o => o.SetFormat(format).SetPreset(ConversionPreset.UltraFast), progress, cancellationToken);
+                    await youtube.Videos.DownloadAsync(video.Id, $"{path}\\{title}.{format}", o => o.SetContainer(format).SetPreset(ConversionPreset.UltraFast), progress, cancellationToken);
                 }
                 catch (TaskCanceledException)
                 {
@@ -317,10 +310,9 @@ namespace Downloader
                 saveMP4.IsEnabled = true;
                 downloadStatus.Text = "";
                 videoLink.Text = "";
-                videoLink.Focus();
-                directoryBox.Focus();
                 downloadProgressOne.Value = 0;
                 downloadProgressTwo.Value = 0;
+                directoryBox.Focus();
             }
         }
 
@@ -336,19 +328,13 @@ namespace Downloader
                 saveMP4.IsChecked = true;
         }
 
-        private void LinkHint(object sender, RoutedEventArgs e)
+        private void VideoLinkTextChanged(object sender, TextChangedEventArgs e)
         {
-            TextBox txtbx = (TextBox)sender;
-
-            if (!txtbx.IsFocused)
-            {
-                if (string.IsNullOrEmpty(txtbx.Text))
-                    videoLinkHint.Visibility = Visibility.Visible;
-            }
+            // Toggle hint visibility
+            if (string.IsNullOrEmpty(videoLink.Text))
+                videoLinkHint.Visibility = Visibility.Visible;
             else
-            {
                 videoLinkHint.Visibility = Visibility.Hidden;
-            }
         }
 
         private void CancelButtonClick(object sender, RoutedEventArgs e)
@@ -358,9 +344,18 @@ namespace Downloader
 
         }
 
-        private void TopBar(object sender, MouseButtonEventArgs e)
+        private void TopBarMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            this.DragMove();
+            if (e.ClickCount == 2)
+            {
+                if (WindowState == WindowState.Normal)
+                    WindowState = WindowState.Maximized;
+                else
+                    WindowState = WindowState.Normal;
+                return;
+            }
+
+            DragMove();
         }
 
         private void TopBarMouseMove(object sender, MouseEventArgs e)
@@ -389,16 +384,16 @@ namespace Downloader
             switch (btn.Name)
             {
                 case "minimiseButton":
-                    this.WindowState = WindowState.Minimized;
+                    WindowState = WindowState.Minimized;
                     break;
                 case "restoreButton":
-                    this.WindowState = WindowState.Normal;
+                    WindowState = WindowState.Normal;
                     break;
                 case "maximiseButton":
-                    this.WindowState = WindowState.Maximized;
+                    WindowState = WindowState.Maximized;
                     break;
                 case "exitButton":
-                    this.Close();
+                    Close();
                     break;
             }
         }
@@ -428,8 +423,16 @@ namespace Downloader
         {
             // Needed for a borderless window with custom chrome window style otherwise there are black bars
             SizeToContent = SizeToContent.Manual;
-
             Height = 200;
+
+            // Incase the selected directory changes in any way
+            if (!Directory.Exists(Properties.Settings.Default.savedDirectory))
+            {
+                Properties.Settings.Default.savedDirectory = "Directory";
+                Properties.Settings.Default.Save();
+
+                directoryBox.Text = Properties.Settings.Default.savedDirectory;
+            }
         }
 
         private void DownloaderClosing(object sender, System.ComponentModel.CancelEventArgs e)

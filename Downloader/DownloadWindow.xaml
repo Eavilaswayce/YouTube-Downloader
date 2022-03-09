@@ -60,7 +60,7 @@
             </Grid.RowDefinitions>
 
             <Grid MouseMove="TopBarMouseMove"
-                  MouseLeftButtonDown="TopBar"
+                  MouseLeftButtonDown="TopBarMouseLeftButtonDown"
                   Background="#20000000">
 
                 <Grid.ColumnDefinitions>
@@ -135,8 +135,8 @@
                     <RowDefinition x:Name="downloadInfoRow" Height="auto"/>
                 </Grid.RowDefinitions>
 
+                <!-- Grid for link and cancel button -->
                 <Grid>
-                    
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="auto"/>
@@ -151,19 +151,20 @@
                              Background="#20000000"
                              Foreground="White"
                              CaretBrush="White"
+                             SelectionBrush="White"
+                             SelectionOpacity="0.2"
                              KeyDown="VideoLinkKeyDown"
-                             GotFocus="LinkHint"
-                             LostFocus="LinkHint"
+                             TextChanged="VideoLinkTextChanged"
                              Style="{DynamicResource PrimaryTextBox}"/>
 
                     <!-- Hint for YouTube link box -->
                     <TextBlock x:Name="videoLinkHint"
                                Margin="20"
-                               Padding="37,1,0,0"
+                               Padding="37,0,0,0"
                                VerticalAlignment="Center"
                                Background="Transparent"
                                Foreground="White"
-                               Text="Paste a YouTube link here..."
+                               Text="Type your YouTube link here..."
                                IsHitTestVisible="False"/>
 
                     <!-- Link icon -->
