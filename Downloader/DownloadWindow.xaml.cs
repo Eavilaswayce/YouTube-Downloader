@@ -52,17 +52,10 @@ namespace Downloader
 
         public async Task BeginDownload()
         {
-            if (string.IsNullOrEmpty(videoLink.Text))
-            {
-                MessageBox.Show("Please input a YouTube link.", "Downloader", MessageBoxButton.OK, MessageBoxImage.Error);
+            if (!CheckInputs())
                 return;
-            }
 
-            if (string.IsNullOrEmpty(Properties.Settings.Default.savedDirectory) || saveMP3.IsChecked == false && saveMP4.IsChecked == false)
-            {
-                MessageBox.Show("Please select a directory and a file type to download.", "Downloader", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
+            ChangeButtonStates(false);
 
             string link = videoLink.Text;
             string ?downloadFormat = null;
@@ -72,8 +65,6 @@ namespace Downloader
                 downloadFormat = "mp3";
             else
                 downloadFormat = "mp4";
-
-            ChangeButtonStates(false);
 
             try
             {
@@ -275,9 +266,27 @@ namespace Downloader
             }
         }
 
-        public static string ReplaceInvalidCharacters(string text)
+        public bool CheckInputs()
         {
-            return text.Replace("\"", "'").Replace("\\", "").Replace("/", "").Replace(":", "").Replace("*", "").Replace("?", "").Replace("<", "").Replace(">", "").Replace("|", "");
+            if (string.IsNullOrEmpty(videoLink.Text))
+            {
+                MessageBox.Show("Please input a YouTube link.", "Downloader", MessageBoxButton.OK, MessageBoxImage.Error);
+                return false;
+            }
+
+            if (Properties.Settings.Default.savedDirectory == "Directory")
+            {
+                MessageBox.Show("Please select a directory to download to.", "Downloader", MessageBoxButton.OK, MessageBoxImage.Error);
+                return false;
+            }
+
+            if (saveMP3.IsChecked == false && saveMP4.IsChecked == false)
+            {
+                MessageBox.Show("Please select a file type to download.", "Downloader", MessageBoxButton.OK, MessageBoxImage.Error);
+                return false;
+            }
+
+            return true;
         }
 
         public void ChangeButtonStates(bool state)
@@ -316,16 +325,9 @@ namespace Downloader
             }
         }
 
-        private void DownloaderLoaded(object sender, RoutedEventArgs e)
+        public static string ReplaceInvalidCharacters(string text)
         {
-            if (!string.IsNullOrEmpty(Properties.Settings.Default.savedDirectory))
-                directoryBox.Text = Properties.Settings.Default.savedDirectory;
-
-            if (Properties.Settings.Default.savedFileType == "MP3")
-                saveMP3.IsChecked = true;
-
-            if (Properties.Settings.Default.savedFileType == "MP4")
-                saveMP4.IsChecked = true;
+            return text.Replace("\"", "'").Replace("\\", "").Replace("/", "").Replace(":", "").Replace("*", "").Replace("?", "").Replace("<", "").Replace(">", "").Replace("|", "");
         }
 
         private void VideoLinkTextChanged(object sender, TextChangedEventArgs e)
@@ -430,9 +432,18 @@ namespace Downloader
             {
                 Properties.Settings.Default.savedDirectory = "Directory";
                 Properties.Settings.Default.Save();
-
-                directoryBox.Text = Properties.Settings.Default.savedDirectory;
             }
+
+            directoryBox.Text = Properties.Settings.Default.savedDirectory;
+        }
+
+        private void DownloaderLoaded(object sender, RoutedEventArgs e)
+        {
+            if (Properties.Settings.Default.savedFileType == "MP3")
+                saveMP3.IsChecked = true;
+
+            if (Properties.Settings.Default.savedFileType == "MP4")
+                saveMP4.IsChecked = true;
         }
 
         private void DownloaderClosing(object sender, System.ComponentModel.CancelEventArgs e)

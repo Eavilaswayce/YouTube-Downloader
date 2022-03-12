@@ -33,7 +33,7 @@
     <Window.TaskbarItemInfo>
         <TaskbarItemInfo x:Name="taskbarIcon"
                          Description="YouTube Downloader"/>
-        
+
     </Window.TaskbarItemInfo>
 
     <Grid x:Name="mainGrid">

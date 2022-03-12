@@ -9,8 +9,8 @@
 	<ApplicationManifest>app.manifest</ApplicationManifest>
 	<ApplicationIcon>Resources\Icon.ico</ApplicationIcon>
 	<AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
-	<AssemblyVersion>1.0.4</AssemblyVersion>
-	<FileVersion>1.0.4</FileVersion>
+	<AssemblyVersion>1.0.7</AssemblyVersion>
+	<FileVersion>1.0.7</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
