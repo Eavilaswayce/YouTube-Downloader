@@ -295,8 +295,6 @@ namespace Downloader
             if (!state)
             {
                 taskbarIcon.ProgressState = System.Windows.Shell.TaskbarItemProgressState.Normal;
-                MinHeight = 280;
-                downloadInfoRow.Height = new GridLength(1, GridUnitType.Star);
                 downloadInfoGrid.Visibility = Visibility.Visible;
                 cancelButtonGrid.Visibility = Visibility.Visible;
                 directorySelect.IsEnabled = false;
@@ -304,13 +302,12 @@ namespace Downloader
                 saveMP3.IsEnabled = false;
                 saveMP4.IsEnabled = false;
                 downloadStatus.Text = "Downloading... 0%";
+                SizeToContent = SizeToContent.WidthAndHeight;
+                MinHeight = Height;
             }
             else
             {
                 taskbarIcon.ProgressState = System.Windows.Shell.TaskbarItemProgressState.None;
-                MinHeight = 200;
-                Height = 200;
-                downloadInfoRow.Height = GridLength.Auto;
                 downloadInfoGrid.Visibility = Visibility.Collapsed;
                 cancelButtonGrid.Visibility = Visibility.Collapsed;
                 directorySelect.IsEnabled = true;
@@ -322,6 +319,7 @@ namespace Downloader
                 downloadProgressOne.Value = 0;
                 downloadProgressTwo.Value = 0;
                 directoryBox.Focus();
+                MinHeight = 200;
             }
         }
 
