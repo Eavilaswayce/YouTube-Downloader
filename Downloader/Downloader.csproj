@@ -2,17 +2,17 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net6.0-windows</TargetFramework>
+    <TargetFramework>net9.0-windows7.0</TargetFramework>
     <Nullable>enable</Nullable>
 	<UseWPF>true</UseWPF>
 	<UseWindowsForms>true</UseWindowsForms>
 	<ApplicationManifest>app.manifest</ApplicationManifest>
 	<ApplicationIcon>Resources\Icon.ico</ApplicationIcon>
 	<AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
-	<AssemblyVersion>1.1.0</AssemblyVersion>
-	<FileVersion>1.1.0</FileVersion>
+	<AssemblyVersion>1.1.1</AssemblyVersion>
+	<FileVersion>1.1.1</FileVersion>
 	<Title>YouTube Downloader</Title>
-	<Version>1.1.0</Version>
+	<Version>1.1.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
